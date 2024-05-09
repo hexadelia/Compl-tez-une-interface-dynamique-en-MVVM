@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="RatingBar">
+        <item name="colorControlActivated">@color/rating_orange</item>
+        <item name="colorContainer">@color/rating_orange</item>
+
+    </style>
+</resources>
