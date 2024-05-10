@@ -19,6 +19,11 @@ import android.widget.Toast;
 import com.openclassrooms.tajmahal.R;
 import com.openclassrooms.tajmahal.databinding.FragmentDetailsBinding;
 import com.openclassrooms.tajmahal.domain.model.Restaurant;
+import com.openclassrooms.tajmahal.domain.model.Review;
+import com.openclassrooms.tajmahal.ui.restaurant.submitRatings.SubmitRatingFragment;
+
+import java.util.List;
+import java.util.OptionalDouble;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -63,6 +68,54 @@ public class DetailsFragment extends Fragment {
         setupUI(); // Sets up user interface components.
         setupViewModel(); // Prepares the ViewModel for the fragment.
         detailsViewModel.getTajMahalRestaurant().observe(requireActivity(), this::updateUIWithRestaurant); // Observes changes in the restaurant data and updates the UI accordingly.
+        detailsViewModel.getReviews().observe(requireActivity(), this::updateUIWithReviews); // Observes changes in the restaurant review data and updates the UI accordingly.
+    }
+
+
+    /**
+     * Updates the UI components with the provided restaurant reviews data.
+     *
+     * @param reviews The restaurant reviews.
+     */
+    private void updateUIWithReviews(List<Review> reviews) {
+        OptionalDouble average = reviews.stream().mapToInt(Review::getRate).average();
+
+        int numberOfReviewsStar1 = (int) reviews.stream().mapToInt(Review::getRate).filter(e -> e == 1).count();
+        int numberOfReviewsStar2 = (int) reviews.stream().mapToInt(Review::getRate).filter(e -> e == 2).count();
+        int numberOfReviewsStar3 = (int) reviews.stream().mapToInt(Review::getRate).filter(e -> e == 3).count();
+        int numberOfReviewsStar4 = (int) reviews.stream().mapToInt(Review::getRate).filter(e -> e == 4).count();
+        int numberOfReviewsStar5 = (int) reviews.stream().mapToInt(Review::getRate).filter(e -> e == 5).count();
+
+        int maxNumberOfReviewsForARating = Math.max(numberOfReviewsStar1, numberOfReviewsStar2);
+        maxNumberOfReviewsForARating = Math.max(maxNumberOfReviewsForARating, numberOfReviewsStar3);
+        maxNumberOfReviewsForARating = Math.max(maxNumberOfReviewsForARating, numberOfReviewsStar4);
+        maxNumberOfReviewsForARating = Math.max(maxNumberOfReviewsForARating, numberOfReviewsStar5);
+
+        if (average.isPresent()) {
+            binding.restaurantRate.setText(String.format("%.1f", average.getAsDouble()));
+            binding.ratingBar.setRating((float) average.getAsDouble());
+        } else {
+            binding.restaurantRate.setText("-");
+            binding.ratingBar.setRating((float) 0.0);
+        }
+
+
+        binding.rating1StarsIndicator.setProgress(numberOfReviewsStar1);
+        binding.rating1StarsIndicator.setMax(maxNumberOfReviewsForARating);
+
+        binding.rating2StarsIndicator.setProgress(numberOfReviewsStar2);
+        binding.rating2StarsIndicator.setMax(maxNumberOfReviewsForARating);
+
+        binding.rating3StarsIndicator.setProgress(numberOfReviewsStar3);
+        binding.rating3StarsIndicator.setMax(maxNumberOfReviewsForARating);
+
+        binding.rating4StarsIndicator.setProgress(numberOfReviewsStar4);
+        binding.rating4StarsIndicator.setMax(maxNumberOfReviewsForARating);
+
+        binding.rating5StarsIndicator.setProgress(numberOfReviewsStar5);
+        binding.rating5StarsIndicator.setMax(maxNumberOfReviewsForARating);
+
+        binding.numberOfVotes.setText(String.format("(%d)", reviews.size()));
     }
 
     /**
@@ -91,6 +144,17 @@ public class DetailsFragment extends Fragment {
                 View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
         );
         window.setStatusBarColor(Color.TRANSPARENT);
+
+        // Add onClick bindings
+        binding.rateRestaurantAction.setOnClickListener(this::rateRestaurantAction);
+    }
+
+    /**
+     * Click on the button "Leave a comment"
+     * @param view
+     */
+    private void rateRestaurantAction(View view) {
+        getParentFragmentManager().beginTransaction().replace(R.id.container, SubmitRatingFragment.createNewInstance()).commitNow();
     }
 
     /**
